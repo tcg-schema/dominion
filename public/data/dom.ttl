@@ -1,0 +1,144 @@
+@prefix tcg:    <https://tcg-schema.org/core#> .
+@prefix dom:    <https://tcg-schema.org/dominion#> .
+@prefix schema: <https://schema.org/> .
+@prefix rdf:    <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
+
+############################################################
+# GAME
+############################################################
+
+dom:Dominion a tcg:CardGame ;
+  schema:name "Dominion" ;
+  schema:identifier "dominion" .
+
+############################################################
+# ZONE ROLES (as DefinedTerms)
+############################################################
+
+dom:ZoneRoles a schema:DefinedTermSet ; schema:name "Dominion Zone Roles" .
+
+dom:Hand       a schema:DefinedTerm ; schema:name "hand" ; schema:inDefinedTermSet dom:ZoneRoles .
+dom:Deck       a schema:DefinedTerm ; schema:name "deck" ; schema:inDefinedTermSet dom:ZoneRoles .
+dom:Discard    a schema:DefinedTerm ; schema:name "discard" ; schema:inDefinedTermSet dom:ZoneRoles .
+dom:InPlay     a schema:DefinedTerm ; schema:name "inPlay" ; schema:inDefinedTermSet dom:ZoneRoles .
+dom:Trash      a schema:DefinedTerm ; schema:name "trash" ; schema:inDefinedTermSet dom:ZoneRoles .
+dom:Supply     a schema:DefinedTerm ; schema:name "supply" ; schema:inDefinedTermSet dom:ZoneRoles .
+dom:Kingdom    a schema:DefinedTerm ; schema:name "kingdom" ; schema:inDefinedTermSet dom:ZoneRoles .
+dom:Prize      a schema:DefinedTerm ; schema:name "prize" ; schema:inDefinedTermSet dom:ZoneRoles .
+
+############################################################
+# RESOURCES (Coins, Buys, Actions)
+############################################################
+
+dom:ResourceSystem a tcg:ResourceSystem ;
+  schema:name "Dominion Turn Resources" ;
+  tcg:inGame dom:Dominion .
+
+dom:Coins   a tcg:ResourceType ; schema:name "Coins" ; tcg:inGame dom:Dominion .
+dom:Buys    a tcg:ResourceType ; schema:name "Buys"  ; tcg:inGame dom:Dominion .
+dom:Actions a tcg:ResourceType ; schema:name "Actions" ; tcg:inGame dom:Dominion .
+
+dom:Dominion tcg:hasResourceSystem dom:ResourceSystem .
+
+############################################################
+# TURN STRUCTURE: Action -> Buy -> Clean-up
+############################################################
+
+dom:Turn a tcg:TurnStructure ;
+  schema:name "Dominion Turn" .
+
+dom:Dominion tcg:hasTurnStructure dom:Turn .
+
+dom:ActionPhase a tcg:TurnPhase ;
+  tcg:orderIndex 0 ;
+  tcg:partSummary "Play Action cards while you have Actions (default 1). You may gain +Actions/+Cards/+Buys/+Coins and other effects." .
+
+dom:BuyPhase a tcg:TurnPhase ;
+  tcg:orderIndex 1 ;
+  tcg:partSummary "Play Treasures to generate Coins, then buy cards from the Supply while you have Buys (default 1)." .
+
+dom:CleanupPhase a tcg:TurnPhase ;
+  tcg:orderIndex 2 ;
+  tcg:partSummary "Discard all cards in play and in hand, then draw 5 new cards." .
+
+dom:Turn tcg:turnPart dom:ActionPhase, dom:BuyPhase, dom:CleanupPhase .
+
+############################################################
+# ACTION TYPES (as DefinedTerms)
+############################################################
+
+dom:ActionTypes a schema:DefinedTermSet ; schema:name "Dominion Action Types" .
+
+dom:PlayActionCard a schema:DefinedTerm ; schema:name "playActionCard" ; schema:inDefinedTermSet dom:ActionTypes .
+dom:PlayTreasure   a schema:DefinedTerm ; schema:name "playTreasure" ; schema:inDefinedTermSet dom:ActionTypes .
+dom:BuyCard        a schema:DefinedTerm ; schema:name "buyCard" ; schema:inDefinedTermSet dom:ActionTypes .
+dom:GainCard       a schema:DefinedTerm ; schema:name "gainCard" ; schema:inDefinedTermSet dom:ActionTypes .
+dom:TrashCard      a schema:DefinedTerm ; schema:name "trashCard" ; schema:inDefinedTermSet dom:ActionTypes .
+dom:DrawCards      a schema:DefinedTerm ; schema:name "drawCards" ; schema:inDefinedTermSet dom:ActionTypes .
+dom:DiscardCards   a schema:DefinedTerm ; schema:name "discardCards" ; schema:inDefinedTermSet dom:ActionTypes .
+
+############################################################
+# EFFECT TYPES (as DefinedTerms)
+############################################################
+
+dom:EffectTypes a schema:DefinedTermSet ; schema:name "Dominion Effect Types" .
+
+dom:AddCoins    a schema:DefinedTerm ; schema:name "addCoins" ; schema:inDefinedTermSet dom:EffectTypes .
+dom:AddBuys     a schema:DefinedTerm ; schema:name "addBuys" ; schema:inDefinedTermSet dom:EffectTypes .
+dom:AddActions  a schema:DefinedTerm ; schema:name "addActions" ; schema:inDefinedTermSet dom:EffectTypes .
+dom:MoveCard    a schema:DefinedTerm ; schema:name "moveCard" ; schema:inDefinedTermSet dom:EffectTypes .
+dom:GainToDiscard a schema:DefinedTerm ; schema:name "gainToDiscard" ; schema:inDefinedTermSet dom:EffectTypes .
+dom:GainToTopDeck a schema:DefinedTerm ; schema:name "gainToTopDeck" ; schema:inDefinedTermSet dom:EffectTypes .
+dom:TrashFromHand a schema:DefinedTerm ; schema:name "trashFromHand" ; schema:inDefinedTermSet dom:EffectTypes .
+
+############################################################
+# GAME STATE (example snapshot structure)
+############################################################
+
+dom:ExampleState a tcg:GameState ;
+  tcg:inGame dom:Dominion ;
+  tcg:currentPhase dom:ActionPhase .
+
+# Shared zones (Supply, Trash)
+dom:SupplyZone a tcg:Zone ; tcg:zoneRole dom:Supply .
+dom:TrashZone  a tcg:Zone ; tcg:zoneRole dom:Trash .
+
+dom:ExampleState tcg:hasZone dom:SupplyZone, dom:TrashZone .
+
+############################################################
+# END CONDITIONS (Dominion base game)
+# Game ends when Province pile is empty OR any 3 Supply piles are empty.
+############################################################
+
+dom:EndByProvinceEmpty a tcg:EndCondition ;
+  tcg:conditionKind [ a schema:DefinedTerm ; schema:name "pileEmpty" ] ;
+  tcg:checkTiming [ a schema:DefinedTerm ; schema:name "continuous" ] ;
+  tcg:conditionSummary "The game ends when the Province pile is empty." .
+
+dom:EndByThreePilesEmpty a tcg:EndCondition ;
+  tcg:conditionKind [ a schema:DefinedTerm ; schema:name "threePilesEmpty" ] ;
+  tcg:checkTiming [ a schema:DefinedTerm ; schema:name "continuous" ] ;
+  tcg:conditionSummary "The game ends when any three Supply piles are empty." .
+
+dom:Dominion tcg:hasEndCondition dom:EndByProvinceEmpty, dom:EndByThreePilesEmpty .
+
+############################################################
+# A GENERIC ACTION EXAMPLE: BUY A CARD
+############################################################
+
+dom:BuyCardActionExample a tcg:GameAction ;
+  tcg:actionType dom:BuyCard ;
+  tcg:performedBy dom:Player1 ;
+  tcg:targets dom:SupplyProvincePile ;
+  tcg:producesEffect dom:GainProvinceToDiscard .
+
+dom:GainProvinceToDiscard a tcg:Effect ;
+  tcg:effectType dom:GainToDiscard ;
+  tcg:modifies dom:Player1DiscardZone .
+
+# Minimal player/zone placeholders
+dom:Player1 a tcg:Player ; schema:name "Player 1" .
+dom:Player1DiscardZone a tcg:Zone ; tcg:zoneRole dom:Discard .
+dom:SupplyProvincePile a schema:Thing ; schema:name "Province Supply Pile" .
